@@ -1,0 +1,17 @@
+
+[workspace]
+resolver = "2"
+members = [ "chartr","libbsb"]
+
+[workspace.package]
+authors = ["orph3uslyre"]
+description = "Libs and tools for naval chart manipulation and conversion written in rust"
+edition = "2021"
+readme = "./README.md"
+license = "MIT OR Apache-2.0"
+keywords = ["naval", "chart", "kap", "bsb"]
+repository = "https://github.com/orph3usLyre/chartr"
+
+[workspace.dependencies]
+image = "0.25.2"
+
