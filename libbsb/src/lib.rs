@@ -131,7 +131,9 @@
 //! attribute and implement the builder pattern. To avoid breaking changes between versions, use
 //! the `Builder` version of the types where possible and set specific fields sparingly.
 //!
+//! ### License
 //!
+//! Dual-licensed under Apache 2.0 and MIT terms.
 
 #![forbid(unsafe_code)]
 #![warn(
