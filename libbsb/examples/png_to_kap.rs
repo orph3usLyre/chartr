@@ -30,7 +30,7 @@ fn main() -> anyhow::Result<()> {
         debug_assert!(i <= 127);
 
         // BSB indexes start from 1
-        bitmap.set_pixel(x as u16, y as u16, i + 1)
+        bitmap.set_pixel_index(x as u16, y as u16, i + 1)
     }
 
     let header = ImageHeader::builder()
