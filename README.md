@@ -80,7 +80,7 @@ consider a color quantization technique such as median cut, k-means clustering, 
 
 ```rust
 use image::GenericImageView;
-use libbsb::{BitMap, KapImageFile, image::raw::header::{ImageHeader, GeneralParameters}, Depth};
+use libbsb::{KapImageFile, image::raw::header::{ImageHeader, GeneralParameters}, image::BitMap, Depth};
 use std::collections::HashMap;
 
 fn main() -> anyhow::Result<()> {
@@ -102,7 +102,7 @@ fn main() -> anyhow::Result<()> {
         debug_assert!(i <= 127);
 
         // BSB indexes start from 1
-        bitmap.set_pixel(x as u16, y as u16, i + 1)
+        bitmap.set_pixel_index(x as u16, y as u16, i + 1)
     }
     let mut palette = map.into_iter().collect::<Vec<_>>();
     palette.sort_by_key(|(_, i)| *i);
@@ -134,5 +134,8 @@ releases until`v1.0`. All the Raw types in this library carry the `#[non_exhaust
 attribute and implement the builder pattern. To avoid breaking changes between versions, use
 the `Builder` version of the types where possible and set specific fields sparingly.
 
+### License
+
+Dual-licensed under Apache 2.0 and MIT terms.
 
 <!-- cargo-rdme end -->
