@@ -76,7 +76,7 @@
 //!
 //! ```rust
 //! use image::GenericImageView;
-//! use libbsb::{BitMap, KapImageFile, image::raw::header::{ImageHeader, GeneralParameters}, Depth};
+//! use libbsb::{KapImageFile, image::raw::header::{ImageHeader, GeneralParameters}, image::BitMap, Depth};
 //! use std::collections::HashMap;
 //!
 //! fn main() -> anyhow::Result<()> {
@@ -98,7 +98,7 @@
 //!         debug_assert!(i <= 127);
 //!
 //!         // BSB indexes start from 1
-//!         bitmap.set_pixel(x as u16, y as u16, i + 1)
+//!         bitmap.set_pixel_index(x as u16, y as u16, i + 1)
 //!     }
 //!     let mut palette = map.into_iter().collect::<Vec<_>>();
 //!     palette.sort_by_key(|(_, i)| *i);
