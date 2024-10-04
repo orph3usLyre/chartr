@@ -6,8 +6,11 @@ use anyhow::Context;
 use image::GenericImageView;
 use itertools::Itertools;
 use libbsb::{
-    image::raw::header::{GeneralParameters, ImageHeader},
-    BitMap, Depth, KapImageFile,
+    image::{
+        raw::header::{GeneralParameters, ImageHeader},
+        BitMap,
+    },
+    Depth, KapImageFile,
 };
 use std::collections::HashMap;
 

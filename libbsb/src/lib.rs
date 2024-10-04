@@ -150,7 +150,6 @@ pub mod image;
 mod serde;
 
 pub use error::Error;
-pub use image::bitmap::BitMap;
 pub use image::ColorPalette;
 pub use image::Depth;
 pub use image::KapImageFile;

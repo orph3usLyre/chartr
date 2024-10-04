@@ -9,8 +9,11 @@ mod common;
 use common::{CONVERTED_PNG_MAPTECH_TEST_KAP_4_DEPTH, TEST_KAP_TO_PNG};
 use image::{codecs::png::PngEncoder, GenericImageView, ImageEncoder};
 use libbsb::{
-    image::raw::header::{GeneralParameters, ImageHeader},
-    BitMap, ColorPalette, Depth, KapImageFile,
+    image::{
+        raw::header::{GeneralParameters, ImageHeader},
+        BitMap,
+    },
+    ColorPalette, Depth, KapImageFile,
 };
 use mktemp::Temp;
 
