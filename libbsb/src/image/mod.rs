@@ -19,8 +19,9 @@ pub mod raw {
         };
     }
 }
+pub use crate::image::bitmap::BitMap;
 
-use crate::{error::Error, BitMap, CTRL_Z};
+use crate::{error::Error, CTRL_Z};
 use anyhow::{ensure, Context, Result};
 use compress::compress_bsb_row;
 use decompress::{BsbDecompressor, Decompressor};

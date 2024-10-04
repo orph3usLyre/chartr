@@ -3,8 +3,11 @@ use std::{collections::HashSet, fs::File, path::Path};
 use anyhow::Result;
 use image::{codecs::png::PngEncoder, GenericImageView, ImageEncoder};
 use libbsb::{
-    image::raw::header::{GeneralParameters, ImageHeader},
-    BitMap, ColorPalette, KapImageFile,
+    image::{
+        raw::header::{GeneralParameters, ImageHeader},
+        BitMap,
+    },
+    ColorPalette, KapImageFile,
 };
 use tracing::{debug, info, instrument};
 
