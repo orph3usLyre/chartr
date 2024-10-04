@@ -42,7 +42,7 @@ impl BitMap {
     }
 
     /// set the value of a specific pixel
-    pub fn set_pixel(&mut self, x: u16, y: u16, value: u8) {
+    pub fn set_pixel_index(&mut self, x: u16, y: u16, value: u8) {
         if x < self.width && y < self.height {
             self.pixels[usize::from(y) * usize::from(self.width) + usize::from(x)] = value;
         }

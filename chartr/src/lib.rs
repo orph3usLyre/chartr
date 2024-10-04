@@ -79,7 +79,7 @@ pub fn image_to_kap(image_file: &Path, output_name: &Path) -> Result<()> {
     for (x, y, p) in img.pixels() {
         if let Some(index) = rgbs.iter().position(|rgb| rgb.eq(&(p[0], p[1], p[2]))) {
             // BSB indexes start from 1
-            bitmap.set_pixel(x as u16, y as u16, (index + 1) as u8)
+            bitmap.set_pixel_index(x as u16, y as u16, (index + 1) as u8)
         } else {
             eprintln!("Unable to find pos for pixel");
         }
