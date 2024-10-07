@@ -76,7 +76,7 @@
 //!
 //! ```rust
 //! use image::GenericImageView;
-//! use libbsb::{KapImageFile, image::raw::header::{ImageHeader, GeneralParameters}, image::BitMap, Depth};
+//! use libbsb::{KapImageFile, image::raw::header::{ImageHeader, GeneralParameters}, Depth};
 //! use std::collections::HashMap;
 //!
 //! fn main() -> anyhow::Result<()> {
@@ -87,7 +87,8 @@
 //!         img.height().try_into().expect("height is too big"),
 //!     );
 //!
-//!     let mut bitmap = BitMap::empty(width, height);
+//!     
+//!   let mut raster_data = vec![0; width as usize * height as usize];
 //!     let mut map = HashMap::new();
 //!     for (x, y, p) in img.pixels() {
 //!         let index = map.len();
@@ -98,7 +99,7 @@
 //!         debug_assert!(i <= 127);
 //!
 //!         // BSB indexes start from 1
-//!         bitmap.set_pixel_index(x as u16, y as u16, i + 1)
+//!          raster_data[y as usize * width as usize + x as usize] = (index + 1) as u8;
 //!     }
 //!     let mut palette = map.into_iter().collect::<Vec<_>>();
 //!     palette.sort_by_key(|(_, i)| *i);
@@ -117,7 +118,7 @@
 //!                 .collect(),
 //!         )
 //!         .build();
-//!     let bsb = KapImageFile::new(header, bitmap)?;
+//!     let bsb = KapImageFile::new(header, raster_data)?;
 //!     bsb.into_file("kap_from_png_example.kap")?;
 //! #   std::fs::remove_file("kap_from_png_example.kap")?;
 //!     Ok(())

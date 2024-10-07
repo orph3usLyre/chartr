@@ -6,10 +6,7 @@ use anyhow::Context;
 use image::GenericImageView;
 use itertools::Itertools;
 use libbsb::{
-    image::{
-        raw::header::{GeneralParameters, ImageHeader},
-        BitMap,
-    },
+    image::raw::header::{GeneralParameters, ImageHeader},
     Depth, KapImageFile,
 };
 use std::collections::HashMap;
@@ -22,7 +19,7 @@ fn main() -> anyhow::Result<()> {
         img.height().try_into().expect("height is too big"),
     );
 
-    let mut bitmap = BitMap::empty(width, height);
+    let mut raster_data = Vec::with_capacity((width * height) as usize);
     let mut map: HashMap<(u8, u8, u8), usize> = HashMap::new();
     for (x, y, p) in img.pixels() {
         let index = map.len();
@@ -33,7 +30,7 @@ fn main() -> anyhow::Result<()> {
         debug_assert!(i <= 127);
 
         // BSB indexes start from 1
-        bitmap.set_pixel_index(x as u16, y as u16, i + 1)
+        raster_data.insert((x * y) as usize, (index + 1) as u8);
     }
 
     let header = ImageHeader::builder()
@@ -51,7 +48,7 @@ fn main() -> anyhow::Result<()> {
                 .collect(),
         )
         .build();
-    let bsb = KapImageFile::new(header, bitmap)?;
+    let bsb = KapImageFile::new(header, raster_data)?;
     bsb.into_file("kap_from_png_example.kap")?;
     Ok(())
 }

@@ -1,8 +1,9 @@
 use bon::Builder;
+use tracing::error;
 
 /// Decompressed bitmap of KAP/BSB image embedded raster data
 #[derive(Builder, Debug, Eq, PartialEq, PartialOrd, Ord)]
-pub struct BitMap {
+pub(crate) struct BitMap {
     /// The width of the image
     width: u16,
     /// The height of the image
@@ -12,6 +13,18 @@ pub struct BitMap {
 }
 
 impl BitMap {
+    pub(crate) fn new(width: u16, height: u16, data: Vec<u8>) -> Self {
+        if usize::from(width) * usize::from(height) != data.len() {
+            error!("Provided width/height does not match data length. Width: {width} Height: {height} Data length: {}", data.len());
+            panic!();
+        }
+        Self {
+            width,
+            height,
+            pixels: data,
+        }
+    }
+
     /// Creates a new [`BitMap`]
     // TODO:
     #[must_use]
@@ -42,7 +55,7 @@ impl BitMap {
     }
 
     /// set the value of a specific pixel
-    pub fn set_pixel_index(&mut self, x: u16, y: u16, value: u8) {
+    fn _set_pixel_index(&mut self, x: u16, y: u16, value: u8) {
         if x < self.width && y < self.height {
             self.pixels[usize::from(y) * usize::from(self.width) + usize::from(x)] = value;
         }

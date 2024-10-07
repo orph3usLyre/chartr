@@ -3,10 +3,7 @@ use std::{collections::HashSet, fs::File, path::Path};
 use anyhow::Result;
 use image::{codecs::png::PngEncoder, GenericImageView, ImageEncoder};
 use libbsb::{
-    image::{
-        raw::header::{GeneralParameters, ImageHeader},
-        BitMap,
-    },
+    image::raw::header::{GeneralParameters, ImageHeader},
     ColorPalette, KapImageFile,
 };
 use tracing::{debug, info, instrument};
@@ -78,16 +75,18 @@ pub fn image_to_kap(image_file: &Path, output_name: &Path) -> Result<()> {
         .build();
 
     let rgbs = header.rgb.as_ref().unwrap();
-    let mut bitmap = BitMap::empty(width, height);
+    // let mut bitmap = BitMap::empty(width, height);
+    let mut raster_data = Vec::with_capacity((width * height) as usize);
     for (x, y, p) in img.pixels() {
         if let Some(index) = rgbs.iter().position(|rgb| rgb.eq(&(p[0], p[1], p[2]))) {
             // BSB indexes start from 1
-            bitmap.set_pixel_index(x as u16, y as u16, (index + 1) as u8)
+            // bitmap.set_pixel_index(x as u16, y as u16, (index + 1) as u8);
+            raster_data.insert((x * y) as usize, (index + 1) as u8);
         } else {
             eprintln!("Unable to find pos for pixel");
         }
     }
-    let bsb = KapImageFile::new(header, bitmap)?;
+    let bsb = KapImageFile::new(header, raster_data)?;
     bsb.into_file("test_assets/bsb_from_png.kap")?;
     Ok(())
 }

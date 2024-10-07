@@ -161,6 +161,14 @@ impl ImageHeader {
     pub(crate) fn empty() -> Self {
         Self::default()
     }
+
+    pub(crate) fn width(&self) -> u16 {
+        self.general_parameters.image_width_height.0
+    }
+
+    pub(crate) fn height(&self) -> u16 {
+        self.general_parameters.image_width_height.1
+    }
 }
 
 /// identifier: BSB
