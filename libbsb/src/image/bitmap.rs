@@ -3,7 +3,7 @@ use tracing::error;
 
 /// Decompressed bitmap of KAP/BSB image embedded raster data
 #[derive(Builder, Debug, Eq, PartialEq, PartialOrd, Ord)]
-pub(crate) struct BitMap {
+pub struct BitMap {
     /// The width of the image
     width: u16,
     /// The height of the image

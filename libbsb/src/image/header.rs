@@ -162,11 +162,11 @@ impl ImageHeader {
         Self::default()
     }
 
-    pub(crate) fn width(&self) -> u16 {
+    pub(crate) const fn width(&self) -> u16 {
         self.general_parameters.image_width_height.0
     }
 
-    pub(crate) fn height(&self) -> u16 {
+    pub(crate) const fn height(&self) -> u16 {
         self.general_parameters.image_width_height.1
     }
 }
