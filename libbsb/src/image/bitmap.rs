@@ -50,7 +50,7 @@ impl BitMap {
 
     /// Returns the pixel indexes of the image
     #[must_use]
-    pub fn pixel_indexes(&self) -> &[u8] {
+    pub fn pixel_indices(&self) -> &[u8] {
         &self.pixels
     }
 

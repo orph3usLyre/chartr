@@ -267,6 +267,12 @@ impl KapImageFile {
         Ok(())
     }
 
+    /// Returns an array of the pixel indices raster data. See the [`KapImageFile`] documentation
+    /// for more information.
+    pub fn pixel_indices(&self) -> &[u8] {
+        self.bitmap.pixel_indices()
+    }
+
     /// Returns an iterator over the palette colors the pixel indexes correspond to
     /// (defined in [`ImageHeader::rgb`])
     ///
@@ -289,7 +295,7 @@ impl KapImageFile {
         }
         .context("get color palette")?;
         // let rgbs = self.header.rgb.as_ref().context("RGB not found")?;
-        let out = self.bitmap.pixel_indexes().iter().map(|bsb_p| {
+        let out = self.bitmap.pixel_indices().iter().map(|bsb_p| {
             // NOTE: we subtract one since bsb file indexes start at 1
             <[u8; 3]>::from(rgbs[(*bsb_p as usize).saturating_sub(1)])
         });
