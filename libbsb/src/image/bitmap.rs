@@ -1,5 +1,4 @@
 use bon::Builder;
-
 /// Decompressed bitmap of KAP/BSB image embedded raster data
 #[derive(Builder, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct BitMap {
@@ -12,10 +11,19 @@ pub struct BitMap {
 }
 
 impl BitMap {
+    pub(crate) fn new(width: u16, height: u16, data: Vec<u8>) -> Self {
+        debug_assert_eq!(usize::from(width) * usize::from(height), data.len());
+        Self {
+            width,
+            height,
+            pixels: data,
+        }
+    }
+
     /// Creates a new [`BitMap`]
     // TODO:
     #[must_use]
-    pub fn empty(width: u16, height: u16) -> Self {
+    pub(crate) fn empty(width: u16, height: u16) -> Self {
         Self {
             width,
             height,
@@ -37,26 +45,19 @@ impl BitMap {
 
     /// Returns the pixel indexes of the image
     #[must_use]
-    pub fn pixel_indexes(&self) -> &[u8] {
+    pub fn pixel_indices(&self) -> &[u8] {
         &self.pixels
     }
 
     /// set the value of a specific pixel
-    pub fn set_pixel_index(&mut self, x: u16, y: u16, value: u8) {
+    pub(crate) fn _set_pixel_index(&mut self, x: u16, y: u16, value: u8) {
         if x < self.width && y < self.height {
             self.pixels[usize::from(y) * usize::from(self.width) + usize::from(x)] = value;
         }
     }
 
-    // clear the bitmap (set all pixels to 0)
-    fn _clear(&mut self) {
-        for pixel in &mut self.pixels {
-            *pixel = 0;
-        }
-    }
-
     // get an entire row of the bitmap
-    fn _get_row(&self, y: u16) -> Option<&[u8]> {
+    pub(crate) fn _get_row(&self, y: u16) -> Option<&[u8]> {
         if y < self.height {
             let start_index = usize::from(y) * usize::from(self.width);
             let end_index = start_index + usize::from(self.width);

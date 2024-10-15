@@ -9,10 +9,7 @@ mod common;
 use common::{CONVERTED_PNG_MAPTECH_TEST_KAP_4_DEPTH, TEST_KAP_TO_PNG};
 use image::{codecs::png::PngEncoder, GenericImageView, ImageEncoder};
 use libbsb::{
-    image::{
-        raw::header::{GeneralParameters, ImageHeader},
-        BitMap,
-    },
+    image::raw::header::{GeneralParameters, ImageHeader},
     ColorPalette, Depth, KapImageFile,
 };
 use mktemp::Temp;
@@ -68,16 +65,16 @@ fn create_bsb_from_converted_png() -> anyhow::Result<()> {
         .build();
 
     let rgbs = header.rgb.as_ref().unwrap();
-    let mut bitmap = BitMap::empty(width, height);
+    let mut raster_data = vec![0; width as usize * height as usize];
     for (x, y, p) in img.pixels() {
         if let Some(index) = rgbs.iter().position(|rgb| rgb.eq(&(p[0], p[1], p[2]))) {
             // BSB indexes start from 1
-            bitmap.set_pixel_index(x as u16, y as u16, (index + 1) as u8)
+            raster_data[y as usize * width as usize + x as usize] = (index + 1) as u8;
         } else {
             eprintln!("Unable to find pos for pixel");
         }
     }
-    let bsb = KapImageFile::new(header, bitmap)?;
+    let bsb = KapImageFile::new(header, raster_data)?;
     bsb.into_file(Temp::new_file()?)?;
     Ok(())
 }
@@ -106,17 +103,19 @@ fn recreate_png_from_converted_png() -> anyhow::Result<()> {
         .rgb(unique_colors.into_iter().collect())
         .build();
     let rgbs = header.rgb.as_ref().unwrap();
-    let mut bitmap = BitMap::empty(width, height);
+    let mut raster_data = vec![0; width as usize * height as usize];
     for (x, y, p) in img.pixels() {
         if let Some(index) = rgbs.iter().position(|rgb| rgb.eq(&(p[0], p[1], p[2]))) {
-            // BSB indexes start from 1
-            bitmap.set_pixel_index(x as u16, y as u16, (index + 1) as u8)
+            if (x as usize) < (width as usize) && (y as usize) < height as usize {
+                // BSB indexes start from 1
+                raster_data[y as usize * width as usize + x as usize] = (index + 1) as u8;
+            }
         } else {
             eprintln!("Unable to find pos for pixel");
         }
     }
     let tmp_kap = Temp::new_file()?;
-    let bsb = KapImageFile::new(header, bitmap)?;
+    let bsb = KapImageFile::new(header, raster_data)?;
     bsb.into_file(&tmp_kap)?;
 
     // now load it again
@@ -138,7 +137,6 @@ fn recreate_png_from_converted_png() -> anyhow::Result<()> {
         image::ExtendedColorType::Rgb8,
     )?;
 
-    // assert hashes
     let hash_1 = sha256::try_digest(Path::new(CONVERTED_PNG_MAPTECH_TEST_KAP_4_DEPTH)).unwrap();
     let hash_2 = sha256::try_digest(tmp_png).unwrap();
     assert_eq!(hash_1, hash_2);

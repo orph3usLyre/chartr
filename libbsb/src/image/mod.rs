@@ -19,10 +19,10 @@ pub mod raw {
         };
     }
 }
-pub use crate::image::bitmap::BitMap;
 
 use crate::{error::Error, CTRL_Z};
 use anyhow::{ensure, Context, Result};
+use bitmap::BitMap;
 use compress::compress_bsb_row;
 use decompress::{BsbDecompressor, Decompressor};
 use header::ImageHeader;
@@ -84,14 +84,19 @@ impl KapImageFile {
     /// This function errors if the width and height of the image header don't match
     /// the width and height of the bitmap
     ///
-    pub fn new(header: ImageHeader, bitmap: BitMap) -> Result<Self, Error> {
-        if header.general_parameters.image_width_height != (bitmap.width(), bitmap.height()) {
+    pub fn new(header: ImageHeader, raster_data: Vec<u8>) -> Result<Self, Error> {
+        let width = header.width();
+        let height = header.height();
+        if raster_data.len() != usize::from(width) * usize::from(height) {
             return Err(Error::MismatchWidthHeight {
                 header: header.general_parameters.image_width_height,
-                bitmap: (bitmap.width(), bitmap.height()),
+                raster_length: raster_data.len(),
             });
         }
-        Ok(Self { header, bitmap })
+        Ok(Self {
+            header,
+            bitmap: BitMap::new(width, height, raster_data),
+        })
     }
 
     /// Returns a reference to the [`ImageHeader`]
@@ -245,6 +250,13 @@ impl KapImageFile {
         Ok(())
     }
 
+    /// Returns an array of the pixel indices raster data. See the [`KapImageFile`] documentation
+    /// for more information.
+    #[must_use]
+    pub fn pixel_indices(&self) -> &[u8] {
+        self.bitmap.pixel_indices()
+    }
+
     /// Returns an iterator over the palette colors the pixel indexes correspond to
     /// (defined in [`ImageHeader::rgb`])
     ///
@@ -267,7 +279,7 @@ impl KapImageFile {
         }
         .context("get color palette")?;
         // let rgbs = self.header.rgb.as_ref().context("RGB not found")?;
-        let out = self.bitmap().pixel_indexes().iter().map(|bsb_p| {
+        let out = self.bitmap.pixel_indices().iter().map(|bsb_p| {
             // NOTE: we subtract one since bsb file indexes start at 1
             <[u8; 3]>::from(rgbs[(*bsb_p as usize).saturating_sub(1)])
         });
@@ -286,18 +298,6 @@ impl KapImageFile {
     #[must_use]
     pub const fn height(&self) -> u16 {
         self.header.general_parameters.image_width_height.1
-    }
-
-    /// Returns a reference to the [`BitMap`]
-    #[must_use]
-    pub const fn bitmap(&self) -> &BitMap {
-        &self.bitmap
-    }
-
-    /// Returns a mutable reference to the [`BitMap`]
-    #[must_use]
-    pub fn bitmap_mut(&mut self) -> &mut BitMap {
-        &mut self.bitmap
     }
 }
 
