@@ -69,7 +69,6 @@ fn create_bsb_from_converted_png() -> anyhow::Result<()> {
     for (x, y, p) in img.pixels() {
         if let Some(index) = rgbs.iter().position(|rgb| rgb.eq(&(p[0], p[1], p[2]))) {
             // BSB indexes start from 1
-            // raster_data.insert((x * y) as usize, (index + 1) as u8);
             raster_data[y as usize * width as usize + x as usize] = (index + 1) as u8;
         } else {
             eprintln!("Unable to find pos for pixel");
@@ -104,16 +103,13 @@ fn recreate_png_from_converted_png() -> anyhow::Result<()> {
         .rgb(unique_colors.into_iter().collect())
         .build();
     let rgbs = header.rgb.as_ref().unwrap();
-    // let mut raster_data = Vec::with_capacity((width * height).into());
     let mut raster_data = vec![0; width as usize * height as usize];
     for (x, y, p) in img.pixels() {
         if let Some(index) = rgbs.iter().position(|rgb| rgb.eq(&(p[0], p[1], p[2]))) {
-            // BSB indexes start from 1
-            // raster_data.insert((x * y) as usize, (index + 1) as u8);
             if (x as usize) < (width as usize) && (y as usize) < height as usize {
+                // BSB indexes start from 1
                 raster_data[y as usize * width as usize + x as usize] = (index + 1) as u8;
             }
-            // raster_data[y as usize * width as usize + x as usize] = (index + 1) as u8;
         } else {
             eprintln!("Unable to find pos for pixel");
         }
@@ -141,7 +137,6 @@ fn recreate_png_from_converted_png() -> anyhow::Result<()> {
         image::ExtendedColorType::Rgb8,
     )?;
 
-    // assert hashes
     let hash_1 = sha256::try_digest(Path::new(CONVERTED_PNG_MAPTECH_TEST_KAP_4_DEPTH)).unwrap();
     let hash_2 = sha256::try_digest(tmp_png).unwrap();
     assert_eq!(hash_1, hash_2);
