@@ -1,6 +1,4 @@
 use bon::Builder;
-use tracing::error;
-
 /// Decompressed bitmap of KAP/BSB image embedded raster data
 #[derive(Builder, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct BitMap {
@@ -14,10 +12,7 @@ pub struct BitMap {
 
 impl BitMap {
     pub(crate) fn new(width: u16, height: u16, data: Vec<u8>) -> Self {
-        if usize::from(width) * usize::from(height) != data.len() {
-            error!("Provided width/height does not match data length. Width: {width} Height: {height} Data length: {}", data.len());
-            panic!();
-        }
+        debug_assert_eq!(usize::from(width) * usize::from(height), data.len());
         Self {
             width,
             height,

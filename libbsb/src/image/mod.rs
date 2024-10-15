@@ -78,22 +78,6 @@ pub enum Depth {
 }
 
 impl KapImageFile {
-    // /// Creates a new [`KapImageFile`]
-    // ///
-    // /// # Errors
-    // /// This function errors if the width and height of the image header don't match
-    // /// the width and height of the bitmap
-    // ///
-    // pub fn new(header: ImageHeader, bitmap: BitMap) -> Result<Self, Error> {
-    //     if header.general_parameters.image_width_height != (bitmap.width(), bitmap.height()) {
-    //         return Err(Error::MismatchWidthHeight {
-    //             header: header.general_parameters.image_width_height,
-    //             raster_length: (bitmap.width(), bitmap.height()),
-    //         });
-    //     }
-    //     Ok(Self { header, bitmap })
-    // }
-
     /// Creates a new [`KapImageFile`]
     ///
     /// # Errors
