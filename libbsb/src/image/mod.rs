@@ -106,7 +106,6 @@ impl KapImageFile {
         if raster_data.len() != usize::from(width) * usize::from(height) {
             return Err(Error::MismatchWidthHeight {
                 header: header.general_parameters.image_width_height,
-                header_calculated: width as usize * height as usize,
                 raster_length: raster_data.len(),
             });
         }

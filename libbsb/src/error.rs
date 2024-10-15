@@ -14,8 +14,6 @@ pub enum Error {
     MismatchWidthHeight {
         /// header width/height
         header: (u16, u16),
-        /// header multiplied
-        header_calculated: usize,
         /// bitmap width/height
         raster_length: usize,
     },
