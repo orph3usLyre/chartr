@@ -252,6 +252,7 @@ impl KapImageFile {
 
     /// Returns an array of the pixel indices raster data. See the [`KapImageFile`] documentation
     /// for more information.
+    #[must_use]
     pub fn pixel_indices(&self) -> &[u8] {
         self.bitmap.pixel_indices()
     }
