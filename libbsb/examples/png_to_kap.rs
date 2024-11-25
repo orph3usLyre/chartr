@@ -20,10 +20,11 @@ fn main() -> anyhow::Result<()> {
     );
 
     let mut raster_data = Vec::with_capacity((width * height) as usize);
+    // Create a map to map RGB values to palette indexes
     let mut map: HashMap<(u8, u8, u8), usize> = HashMap::new();
-    for (x, y, p) in img.pixels() {
+    for (x, y, rgb) in img.pixels() {
         let index = map.len();
-        let i = u8::try_from(*map.entry((p[0], p[1], p[2])).or_insert(index))
+        let i = u8::try_from(*map.entry((rgb[0], rgb[1], rgb[2])).or_insert(index))
             .context("too many colors for BSB/KAP file")?;
         // Since KAP/BSB files use 1, 4, or 7 pixel depth, it cannot support
         // more than (2^7 - 1 = 127) colors

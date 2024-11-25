@@ -53,7 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: muddy
+      - name: libbsb
         run: >
           cargo rustdoc -p libbsb --all-features -- -D warnings
   tests:

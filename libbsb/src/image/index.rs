@@ -3,12 +3,13 @@ use std::io::{self, Seek, SeekFrom};
 
 #[allow(clippy::module_name_repetitions)]
 pub fn read_index(
+    // TODO: support older BSB versions
     _typein: i32,
     file: &mut (impl BufRead + Seek),
     height: u16,
 ) -> io::Result<(Vec<u64>, u64)> {
     let end_of_index = file.seek(SeekFrom::End(-4))?;
-    // so the offset is kept in the last 4 bytes of the file
+    // the offset is kept in the last 4 bytes of the file
     // in the form of 4 successive u8s. imgkap states that it uses big-endian
     let mut offset = [0; 4];
     file.read_exact(&mut offset)?;

@@ -16,11 +16,11 @@ use mktemp::Temp;
 
 #[test]
 fn create_png_from_reserialized_bsb() -> anyhow::Result<()> {
-    let bsb = KapImageFile::from_file(&PathBuf::from_str(TEST_KAP_TO_PNG)?)?;
+    let bsb = KapImageFile::from_path(&PathBuf::from_str(TEST_KAP_TO_PNG)?)?;
     println!("Read BSB from {TEST_KAP_TO_PNG}");
     let tmp_kap = Temp::new_file()?;
     bsb.into_file(&tmp_kap)?;
-    let bsb_2 = KapImageFile::from_file(tmp_kap)?;
+    let bsb_2 = KapImageFile::from_path(tmp_kap)?;
 
     let as_rgb = bsb_2.as_palette_iter(ColorPalette::Rgb)?;
 
@@ -119,7 +119,7 @@ fn recreate_png_from_converted_png() -> anyhow::Result<()> {
     bsb.into_file(&tmp_kap)?;
 
     // now load it again
-    let bsb = KapImageFile::from_file(&tmp_kap)?;
+    let bsb = KapImageFile::from_path(&tmp_kap)?;
 
     let as_rgb = bsb.as_palette_iter(ColorPalette::Rgb)?;
     let tmp_png = Temp::new_file()?;

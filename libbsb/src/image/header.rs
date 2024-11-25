@@ -3,140 +3,185 @@ use chrono::NaiveDate;
 
 use crate::image::Depth;
 
-/// Raw image header, holding all possible records and fields for KAP/BSB image files
+/// Raw image header, holding all possible records and fields for BSB/KAP image files
 ///
-/// Based on Maptech BSB File Format
-/// Test Dataset Instructions for Raster Navigational Chart (RNC) dated 25 July 2001
+/// ## Note
+///
+/// As with the other types exposed by the [`super::raw`] module, the validity of this type must be
+/// guaranteed by the user. The only non-optional parameters in [`ImageHeader`] are:
+///
+/// 1. [`ImageHeader::general_parameters`] must have [`GeneralParameters::image_width_height`]
+/// 2. [`ImageHeader::ifm`] must have [`Depth`]
+///
 // See the research materials [readme](../../../../research/readme.md) for more details
 #[derive(Default, Debug, PartialEq, PartialOrd, Builder)]
 #[non_exhaustive]
 pub struct ImageHeader {
     /// Comments
-    ///
-    ///  
     pub comments: Option<Vec<String>>,
 
-    /// CRR Copyright Record
-    ///
-    ///  
+    /// Record identifier: CRR
     pub copyright_record: Option<String>,
 
-    /// VER Format Version (number)
+    /// Record identifier: VER
     ///
     /// Version number of BSB format e.g. 1, 2.0, 3.0, 3.07, 4.0
-    ///
-    ///  
     pub version: Option<f32>,
 
-    /// BSB General Parameters
-    ///
-    /// BSB    (or NOS for older GEO/NOS or GEO/NO1 files)
-    ///  RA=width,height - width and height of raster image data in pixels
-    ///  NA=Name given to the BSB chart (can represent more than one .KAP)
-    ///  NU=Number of chart (especially when more than one chart is grouped or tiled together)
-    ///  DU=Drawing Units in pixels/inch (same as DPI resolution) e.g. 50, 150, 175, 254, 300   
-    ///
+    /// Record identifier: BSB (or NOS for older GEO/NOS or GEO/NO1 files)
+    ///  
+    /// Field definitions:
+    /// ```"not rust"
+    /// RA=width,height - width and height of raster image data in pixels
+    /// NA=Name given to the BSB chart (can represent more than one .KAP)
+    /// NU=Number of chart (especially when more than one chart is grouped or tiled together)
+    /// DU=Drawing Units in pixels/inch (same as DPI resolution) e.g. 50, 150, 175, 254, 300   
+    /// ```
     ///  
     pub general_parameters: GeneralParameters,
 
-    /// KNP Detailed Parameters
+    /// Record identifier: KNP
     ///
-    /// KNP
-    ///   SC=Scale e.g. 25000
-    ///   GD=Geodetic Datum e.g. NAD83, WGS84
-    ///   PR=Projection e.g. LAMBERT CONFORMAL CONIC, MERCATOR
-    ///   PP=Projection Parameter (value depends upon Projection) e.g. 135.0
-    ///   PI=? e.g. 0.0, 0.033333, 0.083333, 2.0
-    ///   SP=?
-    ///   SK=Skew angle? e.g. 0.0
-    ///   TA=? e.g. 90
-    ///   UN=Units (for DX, DY and others) e.g. METRES, FATHOMS
-    ///   SD=Sounding Datum e.g. MEAN LOWER LOW WATER, HHWLT
-    ///   DX=distance (approx.) covered by one pixel in X direction
-    ///   DY=distance (approx.) covered by one pixel in Y direction   
-    ///
+    /// Field definitions:
+    /// ```"not rust"
+    /// SC=Scale e.g. 25000
+    /// GD=Geodetic Datum e.g. NAD83, WGS84
+    /// PR=Projection e.g. LAMBERT CONFORMAL CONIC, MERCATOR
+    /// PP=Projection Parameter (value depends upon Projection) e.g. 135.0
+    /// PI=? e.g. 0.0, 0.033333, 0.083333, 2.0
+    /// SP=?
+    /// SK=Skew angle? e.g. 0.0
+    /// TA=? e.g. 90
+    /// UN=Units (for DX, DY and others) e.g. METRES, FATHOMS
+    /// SD=Sounding Datum e.g. MEAN LOWER LOW WATER, HHWLT
+    /// DX=distance (approx.) covered by one pixel in X direction
+    /// DY=distance (approx.) covered by one pixel in Y direction   
+    /// ```
     ///
     pub detailed_parameters: Option<DetailedParameters>,
 
-    /// KNQ
-    ///  P1=...,P2=...
-    ///  P3=...,P4=...
-    ///  P5=...,P6=...
+    /// Record identifier: KNQ
+    ///
+    /// Field definitions:
+    /// ```"not rust"
+    /// P1=...,P2=...
+    /// P3=...,P4=...
+    /// P5=...,P6=...
+    /// ```
     pub additional_parameters: Option<AdditionalParameters>,
 
-    /// identifier: CED
+    /// Record identifier: CED
     pub ced: Option<ChartEditionParameters>,
 
-    /// identifier: NTM
+    /// Record identifier: NTM
     pub ntm: Option<NTMRecord>,
 
-    /// OST Offset values section
+    /// Offset values section
     ///
-    /// OST Offset Strip image lines (number of image rows per entry in the index table) e.g. 1
+    /// Record identifier: OST
+    ///
+    /// Represents the number of image rows per entry in the index table (i.e. 1)
     pub ost: Option<usize>,
 
-    /// IFM Compression type
+    /// Record identifier: IFM
     ///
-    /// Depth of the colormap (bits per pixel). BSB supports 1 through 7 (2 through 127 max colors)?
+    /// Compression type, or depth of the colormap (bits per pixel). BSB supports 1 through 7 (2 through 127 max colors)
     pub ifm: Depth,
 
+    /// Record identifier: RGB
+    ///
     /// RGB Default color palette
     ///
-    /// IFM Entries in the raster colormap of the form index,red,green,blue (index 0 is not used in BSB)
+    /// Entries in the raster colormap of the form index,red,green,blue (index 0 is not used in BSB)
+    ///
+    /// Corresponds to [`super::ColorPalette::Rgb`]
     pub rgb: Option<Vec<(u8, u8, u8)>>,
 
-    /// identifier: DAY
+    /// Record identifier: DAY
+    ///
+    /// Corresponds to [`super::ColorPalette::Day`]
     pub day: Option<Vec<(u8, u8, u8)>>,
 
-    /// identifier: DSK
+    /// Record identifier: DSK
+    ///
+    /// Corresponds to [`super::ColorPalette::Dsk`]
     pub dsk: Option<Vec<(u8, u8, u8)>>,
 
-    /// identifier: NGT
+    /// Record identifier: NGT
     /// Night Color palette
+    ///
+    /// Corresponds to [`super::ColorPalette::Ngt`]
     pub ngt: Option<Vec<(u8, u8, u8)>>,
 
-    /// identifier: NGR
+    /// Record identifier: NGR
+    ///
+    /// Corresponds to [`super::ColorPalette::Ngr`]
     pub ngr: Option<Vec<(u8, u8, u8)>>,
 
-    /// identifier: GRY
+    /// Record identifier: GRY
+    ///
+    /// Corresponds to [`super::ColorPalette::Gry`]
     pub gry: Option<Vec<(u8, u8, u8)>>,
 
     /// Optional palette
-    /// identifier: PRC
+    ///
+    /// Record identifier: PRC
+    ///
+    /// Corresponds to [`super::ColorPalette::Prc`]
     pub prc: Option<Vec<(u8, u8, u8)>>,
 
     /// Optional Grey palette
-    /// identifier: PRG
+    ///
+    /// Record identifier: PRG
+    ///
+    /// Corresponds to [`super::ColorPalette::Prg`]
     pub prg: Option<Vec<(u8, u8, u8)>>,
 
-    /// REF Mechanism to allow geographical positions to be converted to RNC (pixel) coordinates
-    /// REF - Registration reference points (at least 3 points)
+    /// Record identifier: REF
+    ///
+    /// REF Mechanism to allow geographical positions to be converted to RNC (pixel) coordinates (registration reference points)
     pub reference_point_record: Option<Vec<Ref>>,
 
-    /// CPH Phase shift value
+    /// Record identifier: CPH
+    ///
+    /// Phase shift value
     pub phase_shift: Option<f64>,
 
-    /// WPX Polynomial L to X
+    /// Record identifier: WPX
+    ///
+    /// Polynomial L to X
     pub wpx: Option<Polynomial>,
 
-    /// PWX Polynomial X to L
+    /// Record identifier: PWX
+    ///
+    /// Polynomial X to L
     pub pwx: Option<Polynomial>,
 
-    /// WPY Polynomial L to Y
+    /// Record identifier: WPY
+    ///
+    /// Polynomial L to Y
     pub wpy: Option<Polynomial>,
 
-    /// PWY Polynomial Y to L
+    /// Record identifier: PWY
+    ///
+    /// Polynomial Y to L
     pub pwy: Option<Polynomial>,
 
+    /// Record identifier: ERR
+    ///
     /// ERR Error record
     pub err: Option<Vec<[f64; 4]>>,
 
-    /// PLY Border Polygon Record
-    /// PLY - Border polygon of the map within the raster image, given in chart datum lat/long
+    /// Record identifier: PLY
+    ///
+    /// Border polygon of the map within the raster image, given in chart datum lat/long
     pub ply: Option<Vec<(f64, f64)>>,
 
-    /// DTM Data Shift Record
-    /// DTM - Datum's northing and easting in floating point seconds (appears to be optional for many charts)
+    /// Record identifier: DTM
+    ///
+    /// Data Shift Record
+    ///
+    /// Datum's northing and easting in floating point seconds (appears to be optional for many charts)
     pub dtm: Option<(f64, f64)>,
 }
 
@@ -171,76 +216,76 @@ impl ImageHeader {
     }
 }
 
-/// identifier: BSB
+/// Record identifier: BSB
 #[derive(Builder, Default, Debug, Clone, Eq, PartialEq, PartialOrd)]
 #[non_exhaustive]
 pub struct GeneralParameters {
-    /// identifier: NA
+    /// Field identifier: NA
     /// RNC name
     pub chart_name: Option<String>,
 
-    /// identifier: NU
+    /// Field identifier: NU
     /// RNC number
     pub chart_number: Option<String>,
 
-    /// identifier: RA
+    /// Field identifier: RA
     pub image_width_height: (u16, u16),
 
-    /// identifier: DU
-    /// Pixel resolution of the image file
+    /// Field identifier: DU
+    /// Pixel resolution of the image
     pub drawing_units: Option<usize>,
 }
 
-/// identifier: KNP
+/// Record identifier: KNP
 #[derive(Builder, Default, Debug, Clone, PartialEq, PartialOrd)]
 #[non_exhaustive]
 pub struct DetailedParameters {
-    /// identifier: SC
+    /// Field identifier: SC
     /// Chart scale
     pub chart_scale: Option<usize>,
 
-    /// identifier: GD
+    /// Field identifier: GD
     /// Geodetic Datum name
     pub geodetic_datum_name: Option<String>,
 
-    /// identifier: PR
+    /// Field identifier: PR
     /// Projection name
     pub projection_name: Option<String>,
 
-    /// identifier: PP
+    /// Field identifier: PP
     pub projection_parameter: Option<f32>,
 
-    /// identifier: PI
+    /// Field identifier: PI
     pub projection_interval: Option<f32>,
 
-    /// identifier: SP
+    /// Field identifier: SP
     // Unknown
     pub sp: Option<String>,
 
-    /// identifier: SK
+    /// Field identifier: SK
     /// Orientation of the north
     /// Skew Angel in the original [?sic]
     pub skew_angle: Option<f32>,
 
-    /// identifier: TA
+    /// Field identifier: TA
     pub text_angle: Option<f32>,
 
-    /// identifier: UN
+    /// Field identifier: UN
     /// Depth and height units
     pub depth_units: Option<String>,
 
-    /// identifier: SD
+    /// Field identifier: SD
     /// Vertical datums
     pub sounding_datum: Option<String>,
 
-    /// identifier: DX
+    /// Field identifier: DX
     pub x_resolution: Option<f32>,
 
-    /// identifier: DY
+    /// Field identifier: DY
     pub y_resolution: Option<f32>,
 }
 
-/// identifier: KNQ
+/// Record identifier: KNQ
 #[derive(Builder, Default, Debug, Clone, PartialEq, PartialOrd)]
 #[non_exhaustive]
 pub struct AdditionalParameters {
@@ -278,37 +323,38 @@ pub struct AdditionalParameters {
     pub pc: Option<String>,
 }
 
-/// identifier: CED
+/// Record identifier: CED
 #[derive(Builder, Default, Debug, Clone, Eq, PartialEq, PartialOrd)]
 #[non_exhaustive]
 pub struct ChartEditionParameters {
-    /// identifier: SE
+    /// Field identifier: SE
     pub source_edition: Option<usize>,
-    /// identifier: RE
+    /// Field identifier: RE
     pub raster_edition: Option<usize>,
-    /// identifier: ED
+    /// Field identifier: ED
     pub edition_date: Option<NaiveDate>,
 }
 
-/// identifier: NTM
+/// Record identifier: NTM
 #[derive(Builder, Default, Debug, Clone, PartialEq, PartialOrd)]
 #[non_exhaustive]
 pub struct NTMRecord {
-    /// identifier: NE
+    /// Field identifier: NE
     /// NTM edition
     pub edition: Option<f32>,
-    /// identifier: ND
+    /// Field identifier: ND
     /// NTM date
     pub date: Option<NaiveDate>,
-    /// identifier: BF
+    /// Field identifier: BF
     /// Base flag
     pub base_flag: Option<String>,
-    /// identifier: BD
+    /// Field identifier: BD
     /// ADN Record
     pub adn_record: Option<NaiveDate>,
 }
 
-/// identifier: REF
+/// Record identifier: REF
+///
 /// Used to map pixel coordinates to geographical coordinates
 #[derive(Builder, Default, Debug, Clone, PartialEq, PartialOrd)]
 #[non_exhaustive]

@@ -6,10 +6,11 @@ pub(crate) mod decompress;
 pub(crate) mod header;
 pub(crate) mod index;
 
-/// Module containing raw header types
+/// Module containing raw types
 ///
-/// Types in this module are considered "unchecked", the responsibility
-/// of upholding validity is on the user
+/// Types in this module are considered "unchecked"; the responsibility
+/// of upholding validity is on the user.
+///
 pub mod raw {
     /// Contains types related to BSB/KAP image file headers
     pub mod header {
@@ -21,7 +22,6 @@ pub mod raw {
 }
 
 use crate::{error::Error, CTRL_Z};
-use anyhow::{ensure, Context, Result};
 use bitmap::BitMap;
 use compress::compress_bsb_row;
 use decompress::{BsbDecompressor, Decompressor};
@@ -33,9 +33,15 @@ use std::{
     io::{BufRead, BufReader, BufWriter, Seek, SeekFrom, Write},
     path::Path,
 };
-use tracing::{debug, info, trace};
+use tracing::{debug, info, trace, warn};
 
 /// A typed representation of a BSB/KAP image file
+///
+/// The BSB/KAP image file holds a header, which carries associated metadata,
+/// as well as the decompressed raster data of the image.
+///
+/// The decompressed raster data represents the pixel indices of the image,
+/// which map to pixel values through use of the palettes found in [`ImageHeader`].
 #[derive(Debug, PartialEq, PartialOrd)]
 pub struct KapImageFile {
     header: ImageHeader,
@@ -46,20 +52,36 @@ pub struct KapImageFile {
 /// The different palettes a BSB/KAP image file can contain
 pub enum ColorPalette {
     /// Default color palette (RGB)
+    ///
+    /// Corresponds to [`ImageHeader::rgb`]
     Rgb,
     /// Day color palette (DAY)
+    ///
+    /// Corresponds to [`ImageHeader::day`]
     Day,
     /// Dusk color palette (DSK)
+    ///
+    /// Corresponds to [`ImageHeader::dsk`]
     Dsk,
     /// Night color palette (NGT)
+    ///
+    /// Corresponds to [`ImageHeader::ngt`]
     Ngt,
     /// Night red color palette (NGR)
+    ///
+    /// Corresponds to [`ImageHeader::ngr`]
     Ngr,
     /// Gray color palette (NGR)
+    ///
+    /// Corresponds to [`ImageHeader::gry`]
     Gry,
     /// Optional color palette (PRC)
+    ///
+    /// Corresponds to [`ImageHeader::prc`]
     Prc,
     /// Optional gray color palette (PRG)
+    ///
+    /// Corresponds to [`ImageHeader::prg`]
     Prg,
 }
 
@@ -67,18 +89,18 @@ pub enum ColorPalette {
 /// Image depth
 /// BSB/KAP image files only support 1, 4, and 7 pixel depth
 pub enum Depth {
-    /// Image depth 1: 1 bit is used to represent the depth of the image
+    /// 1 bit is used to represent the depth of the image
     // TODO: use builder in header parse to remove default
     #[default]
     One,
-    /// Image depth 4: 4 bits are used to represent the depth of the image
+    /// 4 bits are used to represent the depth of the image
     Four,
-    /// Image depth 7: 7 bits are used to represent the depth of the image
+    /// 7 bits are used to represent the depth of the image
     Seven,
 }
 
 impl KapImageFile {
-    /// Creates a new [`KapImageFile`]
+    /// Creates a new [`Self`]
     ///
     /// # Errors
     /// This function errors if the width and height of the image header don't match
@@ -110,7 +132,7 @@ impl KapImageFile {
     /// # Errors
     ///
     /// This function errors if the header data is invalid
-    pub(crate) fn get_header(r: &mut (impl BufRead + Seek)) -> Result<ImageHeader> {
+    pub(crate) fn get_header(r: &mut (impl BufRead + Seek)) -> Result<ImageHeader, crate::Error> {
         match r.stream_position()? {
             0 => {}
             _ => r.rewind()?,
@@ -118,7 +140,8 @@ impl KapImageFile {
         let mut header = Vec::new();
         let read = r.read_until(CTRL_Z, &mut header)?;
         debug!("read {read} for header");
-        let header = String::from_utf8(header)?;
+        let header = String::from_utf8(header)
+            .map_err(|e| Error::Parse(crate::serde::error::Error::FromUtf8(e)))?;
         trace!("Header:\n{}", &header);
         header.parse()
     }
@@ -127,12 +150,12 @@ impl KapImageFile {
     ///
     /// # Errors
     ///
-    /// This function will error if the underlying buffer is invalid data for any reason:
+    /// This function will error if the underlying buffer contains invalid data:
     /// - KAP header is invalid
     /// - Depth is not one of (1, 4, 7)
     /// - Raster index has an invalid size
     // TODO: more
-    pub fn from_reader(mut r: impl BufRead + Seek) -> Result<Self> {
+    pub fn from_reader(mut r: impl BufRead + Seek) -> Result<Self, crate::Error> {
         let header = Self::get_header(&mut r)?;
         // keep reading here since we haven't seeked after getting header
 
@@ -149,24 +172,24 @@ impl KapImageFile {
         //https://www.yachtingmonthly.com/cruising-life/through-the-french-canals-to-the-med-in-a-yacht-95086
         let mut depth = [0];
         let read = r.read(&mut depth)?;
-        let depth = depth[0];
+        let depth = Depth::try_from(depth[0])?;
         debug!("read {read} for depth {}", depth);
 
-        // keep pointer here to begin image
+        // keep pointer to where raster data starts
         let raster_start = r.stream_position()?;
 
-        // TODO: warn?
-        ensure!(
-            u8::from(header.ifm) == depth,
-            "Kap image file must contain image depth"
-        );
+        if header.ifm != depth {
+            warn!(
+                "Depth indicated in header: '{}' does not match depth preceeding raster data: '{}'",
+                header.ifm, depth
+            );
+        }
 
         let (width, height) = header.general_parameters.image_width_height;
         debug!("Raster width, height: {:?}", (&width, &height));
 
         debug!("OST: {:?}", &header.ost);
 
-        // index is the ordered image indexes
         let (index, _raster_end) = read_index(0, &mut r, height)?;
         debug!("Index len: {}", index.len());
 
@@ -177,28 +200,28 @@ impl KapImageFile {
 
         debug!("Decompressing BSB bitmap");
         match depth {
-            1 => {
+            Depth::One => {
                 Decompressor::<1>::decompress_bsb_from_reader(&mut r, &mut bitmap, &index)?;
             }
-            4 => {
+            Depth::Four => {
                 Decompressor::<4>::decompress_bsb_from_reader(&mut r, &mut bitmap, &index)?;
             }
-            7 => {
+            Depth::Seven => {
                 Decompressor::<7>::decompress_bsb_from_reader(&mut r, &mut bitmap, &index)?;
             }
-            _ => unimplemented!("Only 1, 4, and 7 pixel depth is supported by KAP/BSB"),
         }
 
         Ok(Self { header, bitmap })
     }
+
     /// Tries to read [`Self`] from a provided file path
     ///
     /// # Errors
     ///
     /// This function will error if the file cannot be opened or if the file contains invalid data.
     /// See [`Self::from_reader`] for potential errors
-    pub fn from_file<P: AsRef<Path>>(filename: P) -> Result<Self> {
-        let file = File::open(filename)?;
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, crate::Error> {
+        let file = File::open(path)?;
         Self::from_reader(BufReader::new(file))
     }
 
@@ -208,7 +231,7 @@ impl KapImageFile {
     ///
     /// This will error if unable to open and/or write to the provided filename
     ///
-    pub fn into_file(mut self, filename: impl AsRef<Path>) -> Result<()> {
+    pub fn into_file(mut self, filename: impl AsRef<Path>) -> Result<(), crate::Error> {
         let f = File::options()
             .create(true)
             .write(true)
@@ -217,15 +240,13 @@ impl KapImageFile {
         let mut f = BufWriter::new(f);
         let h = self.header.into_header_format();
         trace!("HEADER:\n{h}");
-        f.write(h.as_bytes()).context("Write header to file")?;
+        let _ = f.write(h.as_bytes())?;
         let mut index = Vec::new();
         let mut i = 0;
         // TODO: This should take expected size
         let mut compressed_buf = Vec::new();
         let depth = self.header.ifm.into();
-        ensure!(depth <= 7, "BSB depth cannot be more than 7");
-        f.write(&[CTRL_Z, 0x00, depth])
-            .context("Header terminating characters")?;
+        let _ = f.write(&[CTRL_Z, 0x00, depth])?;
         let width_in = self.width();
         // TODO: what is width out? related to pixel compression level?
         let width_out = width_in;
@@ -233,12 +254,12 @@ impl KapImageFile {
             let _len = compress_bsb_row(row, &mut compressed_buf, depth, i, width_in, width_out);
 
             // write index by adding the file position before writing the row
-            index.push(f.stream_position().context("stream position")?);
+            index.push(f.stream_position()?);
             f.write_all(&compressed_buf)?;
             compressed_buf.clear();
             i += 1;
         }
-        index.push(f.stream_position().context("stream position")?);
+        index.push(f.stream_position()?);
         let index: Vec<_> = index
             .iter()
             .flat_map(|&i| u32::try_from(i).unwrap_or(u32::MAX).to_be_bytes())
@@ -257,7 +278,7 @@ impl KapImageFile {
         self.bitmap.pixel_indices()
     }
 
-    /// Returns an iterator over the palette colors the pixel indexes correspond to
+    /// Returns an iterator over the palette colors the pixel indices correspond to
     /// (defined in [`ImageHeader::rgb`])
     ///
     /// # Errors
@@ -266,8 +287,8 @@ impl KapImageFile {
     pub fn as_palette_iter(
         &self,
         palette: ColorPalette,
-    ) -> Result<impl Iterator<Item = [u8; 3]> + '_> {
-        let rgbs = match palette {
+    ) -> Result<impl Iterator<Item = [u8; 3]> + '_, crate::Error> {
+        let Some(rgbs) = (match palette {
             ColorPalette::Rgb => self.header().rgb.as_ref(),
             ColorPalette::Day => self.header().day.as_ref(),
             ColorPalette::Dsk => self.header().dsk.as_ref(),
@@ -276,25 +297,24 @@ impl KapImageFile {
             ColorPalette::Gry => self.header().gry.as_ref(),
             ColorPalette::Prc => self.header().prc.as_ref(),
             ColorPalette::Prg => self.header().prg.as_ref(),
-        }
-        .context("get color palette")?;
+        }) else {
+            return Err(crate::Error::NonExistentPalette);
+        };
         // let rgbs = self.header.rgb.as_ref().context("RGB not found")?;
         let out = self.bitmap.pixel_indices().iter().map(|bsb_p| {
-            // NOTE: we subtract one since bsb file indexes start at 1
+            // NOTE: we subtract one since bsb file indices start at 1
             <[u8; 3]>::from(rgbs[(*bsb_p as usize).saturating_sub(1)])
         });
         Ok(out)
     }
 
     /// Returns the image width
-    // TODO: can never be different than bitmap
     #[must_use]
     pub const fn width(&self) -> u16 {
         self.header.general_parameters.image_width_height.0
     }
 
     /// Returns the image height
-    // TODO: can never be different than bitmap
     #[must_use]
     pub const fn height(&self) -> u16 {
         self.header.general_parameters.image_width_height.1
@@ -311,31 +331,21 @@ impl From<Depth> for u8 {
     }
 }
 
-impl From<&Depth> for u8 {
-    fn from(value: &Depth) -> Self {
-        match value {
-            Depth::One => 1,
-            Depth::Four => 4,
-            Depth::Seven => 7,
-        }
-    }
-}
-
 impl Display for Depth {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", u8::from(self))
+        write!(f, "{}", u8::from(*self))
     }
 }
 
 impl TryFrom<u8> for Depth {
-    type Error = &'static str;
+    type Error = crate::Error;
 
     fn try_from(value: u8) -> std::result::Result<Self, Self::Error> {
         match value {
             1 => Ok(Self::One),
             4 => Ok(Self::Four),
             7 => Ok(Self::Seven),
-            _ => Err("Only 1, 4, and 7 are valid BSB depths"),
+            o => Err(Error::UnsupportedDepth(o)),
         }
     }
 }

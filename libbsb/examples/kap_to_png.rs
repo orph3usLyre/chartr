@@ -6,7 +6,7 @@ use libbsb::{ColorPalette, KapImageFile};
 use std::fs::File;
 
 fn main() -> anyhow::Result<()> {
-    let bsb = KapImageFile::from_file("../test_assets/12221_1_MapTech_testing_origin.kap")?;
+    let bsb = KapImageFile::from_path("../test_assets/12221_1_MapTech_testing_origin.kap")?;
 
     let as_rgb: Vec<_> = bsb.as_palette_iter(ColorPalette::Rgb)?.flatten().collect();
 

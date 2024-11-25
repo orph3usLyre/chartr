@@ -16,13 +16,13 @@ fn strip_comments(header: &str) -> impl Iterator<Item = &str> {
 
 #[test]
 fn parse_works() -> anyhow::Result<()> {
-    let _result = KapImageFile::from_file(&PathBuf::from_str(TEST_KAP_TO_PNG)?)?;
+    let _result = KapImageFile::from_path(&PathBuf::from_str(TEST_KAP_TO_PNG)?)?;
     Ok(())
 }
 
 #[test]
 fn parse_serialize_works() -> anyhow::Result<()> {
-    let bsb = KapImageFile::from_file(&PathBuf::from_str(TEST_KAP_TO_PNG)?)?;
+    let bsb = KapImageFile::from_path(&PathBuf::from_str(TEST_KAP_TO_PNG)?)?;
     bsb.into_file(Temp::new_file()?)?;
     Ok(())
 }

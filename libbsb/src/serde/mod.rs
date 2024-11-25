@@ -370,7 +370,7 @@ impl ImageHeader {
 }
 
 impl FromStr for ImageHeader {
-    type Err = anyhow::Error;
+    type Err = crate::Error;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         let mut image_header = Self::empty();

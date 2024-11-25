@@ -10,7 +10,7 @@ use tracing::{debug, info, instrument};
 
 #[instrument]
 pub fn kap_to_image(bsb_file: &Path, output_name: &Path) -> Result<()> {
-    let bsb = KapImageFile::from_file(bsb_file)?;
+    let bsb = KapImageFile::from_path(bsb_file)?;
     debug!("Read bsb from file");
 
     let as_rgb: Vec<_> = bsb.as_palette_iter(ColorPalette::Rgb)?.flatten().collect();

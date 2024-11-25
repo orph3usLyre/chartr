@@ -1,15 +1,13 @@
-use anyhow::{anyhow, Context, Result};
 use std::io::{BufRead, Bytes, Read, Seek, SeekFrom};
-use tracing::error;
 
-use crate::image::bitmap::BitMap;
+use crate::{image::bitmap::BitMap, Error};
 
 pub trait BsbDecompressor<const DEPTH: u8> {
     fn decompress_bsb_row(
         decompressed_row_buf: &mut [u8],
         stream: &mut impl BufRead,
         width: u16,
-    ) -> Result<usize> {
+    ) -> Result<usize, Error> {
         let decin = 7 - DEPTH;
         let maxin = (1 << decin) - 1;
 
@@ -22,8 +20,6 @@ pub trait BsbDecompressor<const DEPTH: u8> {
         // our data
         let mut stream = stream.bytes();
 
-        // read line number
-        // decin is 0 here - why?
         let line_number = bsb_decompress_nb(type_in, &mut stream, &mut pixel, 0, 0x7F)?;
         Self::decompress_bsb_row_loop(decompressed_row_buf, stream, pixel, width, maxin, decin)?;
 
@@ -37,20 +33,24 @@ pub trait BsbDecompressor<const DEPTH: u8> {
         image_width: u16,
         maxin: u8,
         decin: u8,
-    ) -> Result<()>;
+    ) -> Result<(), Error>;
 
     fn decompress_bsb_from_reader(
         mut r: &mut (impl BufRead + Seek),
         bitmap: &mut BitMap,
         index: &[u64],
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         let (width, height) = (bitmap.width(), bitmap.height());
         for (image_row_i, &index_element) in index.iter().enumerate().take(usize::from(height)) {
-            let row =
-                u16::try_from(image_row_i).context("Index of header index conversion to u16")?;
+            let row = u16::try_from(image_row_i).map_err(|e| {
+                Error::Other(format!(
+                    "Unable to convert index table i to u16. Is the index valid?: {e:?}"
+                ))
+            })?;
             let Some(row_buf) = bitmap.get_row_mut(row) else {
-                error!("Unexpected end of BitMap. Is it too short? (rows)");
-                break;
+                return Err(Error::Other(
+                    "Unexpected end of BitMap. Is it too short? (rows)".into(),
+                ));
             };
             r.seek(SeekFrom::Start(index_element))?;
             let _row = Self::decompress_bsb_row(row_buf, &mut r, width)?;
@@ -69,7 +69,7 @@ impl BsbDecompressor<1> for Decompressor<1> {
         mut image_width: u16,
         maxin: u8,
         decin: u8,
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         let mut xout: u16 = 0;
         while image_width != 0 {
             let mut count = bsb_decompress_nb(0, &mut stream, &mut pixel, decin, maxin)?;
@@ -95,7 +95,7 @@ impl BsbDecompressor<4> for Decompressor<4> {
         mut image_width: u16,
         maxin: u8,
         decin: u8,
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         let mut xout: u16 = 0;
         while image_width != 0 {
             let mut count = bsb_decompress_nb(0, &mut stream, &mut pixel, decin, maxin)?;
@@ -126,7 +126,7 @@ impl BsbDecompressor<7> for Decompressor<7> {
         mut image_width: u16,
         maxin: u8,
         decin: u8,
-    ) -> Result<()> {
+    ) -> Result<(), Error> {
         let mut xout: u16 = 0;
         while image_width != 0 {
             let mut count = bsb_decompress_nb(0, &mut stream, &mut pixel, decin, maxin)?;
@@ -144,16 +144,16 @@ impl BsbDecompressor<7> for Decompressor<7> {
     }
 }
 
-fn fgetkapc(typein: i32, stream: &mut Bytes<&mut impl BufRead>) -> Result<u8> {
+fn fgetkapc(typein: i32, stream: &mut Bytes<&mut impl BufRead>) -> Result<u8, Error> {
     let mut b = stream
         .next()
-        .ok_or_else(|| anyhow!("Unexpected stream end"))?;
+        .ok_or_else(|| Error::Other("Unexpected stream end".into()))?;
     if typein == 1025 {
         // FIXME: saturating or wrapping?
         // There is currently no typein
         b = b.map(|b| b.saturating_sub(9));
     }
-    b.map_err(|e| anyhow!("Error reading from stream: {e:?}"))
+    b.map_err(|e| Error::Other(format!("Error reading from stream: {e:?}")))
 }
 
 fn bsb_decompress_nb(
@@ -162,7 +162,7 @@ fn bsb_decompress_nb(
     pixel: &mut u8,
     decin: u8,
     maxin: u8,
-) -> Result<u16> {
+) -> Result<u16, Error> {
     let mut c = fgetkapc(typein, stream)?;
     let mut count = u16::from(c) & 0x7f;
     *pixel = u8::try_from(count >> decin).unwrap_or(u8::MAX);
