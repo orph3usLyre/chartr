@@ -90,7 +90,7 @@
 //!     let img = image::open("../test_assets/converted_png_8_depth_saint_malo.png")
 //!         .expect("Failed to open image");
 //!
-//!     // BSB/KAP files use `u16`s to define their heigh/width
+//!     // BSB/KAP files use `u16`s to define their height/width
 //!     let (width, height) = (
 //!         img.width().try_into().expect("width is too big"),
 //!         img.height().try_into().expect("height is too big"),
