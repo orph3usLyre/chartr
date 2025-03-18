@@ -11,6 +11,3 @@ readme = "./README.md"
 license = "MIT OR Apache-2.0"
 keywords = ["naval", "chart", "kap", "bsb"]
 repository = "https://github.com/orph3usLyre/chartr"
-
-[workspace.dependencies]
-image = "0.25.2"
