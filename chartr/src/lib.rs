@@ -1,10 +1,10 @@
 use std::{collections::HashSet, fs::File, path::Path};
 
 use anyhow::Result;
-use image::{codecs::png::PngEncoder, GenericImageView, ImageEncoder};
+use image::{GenericImageView, ImageEncoder, codecs::png::PngEncoder};
 use libbsb::{
-    image::raw::header::{GeneralParameters, ImageHeader},
     ColorPalette, KapImageFile,
+    image::raw::header::{GeneralParameters, ImageHeader},
 };
 use tracing::{debug, info, instrument};
 

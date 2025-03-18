@@ -7,10 +7,10 @@ use std::{
 
 mod common;
 use common::{CONVERTED_PNG_MAPTECH_TEST_KAP_4_DEPTH, TEST_KAP_TO_PNG};
-use image::{codecs::png::PngEncoder, GenericImageView, ImageEncoder};
+use image::{GenericImageView, ImageEncoder, codecs::png::PngEncoder};
 use libbsb::{
-    image::raw::header::{GeneralParameters, ImageHeader},
     ColorPalette, Depth, KapImageFile,
+    image::raw::header::{GeneralParameters, ImageHeader},
 };
 use mktemp::Temp;
 

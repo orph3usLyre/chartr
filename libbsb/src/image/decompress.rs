@@ -1,6 +1,6 @@
 use std::io::{BufRead, Bytes, Read, Seek, SeekFrom};
 
-use crate::{image::bitmap::BitMap, Error};
+use crate::{Error, image::bitmap::BitMap};
 
 pub trait BsbDecompressor<const DEPTH: u8> {
     fn decompress_bsb_row(

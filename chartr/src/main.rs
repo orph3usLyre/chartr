@@ -1,8 +1,8 @@
 use chartr::{image_to_kap, kap_to_image};
 use std::path::PathBuf;
-use tracing::{info, Level};
+use tracing::{Level, info};
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use clap::{Parser, Subcommand};
 
 #[cfg(not(debug_assertions))]

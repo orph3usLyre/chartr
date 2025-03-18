@@ -1,12 +1,12 @@
 use itertools::{Itertools, TupleWindows};
 use nom::{
+    IResult, InputLength,
     branch::alt,
     bytes::complete::{tag, take_till},
     character::complete::{digit1, multispace0},
     combinator::map_res,
     number::streaming::double,
     sequence::separated_pair,
-    IResult, InputLength,
 };
 use regex::Regex;
 use tracing::{error, warn};
