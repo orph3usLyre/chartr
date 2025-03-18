@@ -1,7 +1,7 @@
 /// Demonstrates how to create a png file from a [`KapImageFile`]
 /// using the [`image`] crate
 ///
-use image::{codecs::png::PngEncoder, ImageEncoder};
+use image::{ImageEncoder, codecs::png::PngEncoder};
 use libbsb::{ColorPalette, KapImageFile};
 use std::fs::File;
 

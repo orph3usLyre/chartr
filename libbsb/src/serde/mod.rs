@@ -4,11 +4,15 @@ pub mod record;
 pub mod utils;
 
 use crate::{
+    CRLF,
     image::header::{ImageHeader, Polynomial, Ref},
     serde::field::Field,
-    CRLF,
 };
-use record::{parse, Record};
+use Field::{
+    BD, BF, DU, DX, DY, EC, ED, GC, GD, NA, ND, NE, NU, P1, P2, P3, P4, PC, PI, PP, PR, RA, RE, RM,
+    SC, SD, SE, SK, SP, TA, UN, VC,
+};
+use record::{Record, parse};
 use regex::Regex;
 use std::fmt::Write;
 use std::{str::FromStr, sync::LazyLock};
@@ -17,10 +21,6 @@ use utils::{
     get_boundaries, handle_ires, handle_opt_ires, handle_owned_opt_ires, parse_coords,
     parse_index_coords, parse_index_err, parse_index_poly, parse_index_rgb, parse_num_tuple_u16,
     parse_ref, parse_till_comma_or_newline,
-};
-use Field::{
-    BD, BF, DU, DX, DY, EC, ED, GC, GD, NA, ND, NE, NU, P1, P2, P3, P4, PC, PI, PP, PR, RA, RE, RM,
-    SC, SD, SE, SK, SP, TA, UN, VC,
 };
 
 const AMERICAN_DATE_FORMAT: &str = "%m/%d/%Y";

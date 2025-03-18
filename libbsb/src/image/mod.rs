@@ -21,7 +21,7 @@ pub mod raw {
     }
 }
 
-use crate::{error::Error, CTRL_Z};
+use crate::{CTRL_Z, error::Error};
 use bitmap::BitMap;
 use compress::compress_bsb_row;
 use decompress::{BsbDecompressor, Decompressor};
@@ -88,9 +88,9 @@ pub enum ColorPalette {
 #[derive(Default, Debug, Eq, PartialEq, PartialOrd, Ord, Copy, Clone)]
 /// Image depth
 /// BSB/KAP image files only support 1, 4, and 7 pixel depth
+#[non_exhaustive]
 pub enum Depth {
     /// 1 bit is used to represent the depth of the image
-    // TODO: use builder in header parse to remove default
     #[default]
     One,
     /// 4 bits are used to represent the depth of the image
@@ -169,7 +169,6 @@ impl KapImageFile {
         // Binary section consisting of:
         // One or more rows of run-length compressed raster data
         // An index table consisting of 32-bit integers storing file offsets to each image row
-        //https://www.yachtingmonthly.com/cruising-life/through-the-french-canals-to-the-med-in-a-yacht-95086
         let mut depth = [0];
         let read = r.read(&mut depth)?;
         let depth = Depth::try_from(depth[0])?;
@@ -278,16 +277,18 @@ impl KapImageFile {
         self.bitmap.pixel_indices()
     }
 
-    /// Returns an iterator over the palette colors the pixel indices correspond to
-    /// (defined in [`ImageHeader::rgb`])
+    /// Returns an iterator over the palette colors to which the pixel indices correspond
+    /// (defined in [`ImageHeader`])
     ///
     /// # Errors
     ///
-    /// Will return an error if [`ImageHeader::rgb`] is [`None`].
+    /// Will return an error if the corresponding [`ColorPalette`] does not exist
+    /// in the header (is [`None`]). See the [`ColorPalette`] documentation for information
+    /// about these values.
     pub fn as_palette_iter(
         &self,
         palette: ColorPalette,
-    ) -> Result<impl Iterator<Item = [u8; 3]> + '_, crate::Error> {
+    ) -> Result<impl Iterator<Item = [u8; 3]>, crate::Error> {
         let Some(rgbs) = (match palette {
             ColorPalette::Rgb => self.header().rgb.as_ref(),
             ColorPalette::Day => self.header().day.as_ref(),
@@ -300,7 +301,6 @@ impl KapImageFile {
         }) else {
             return Err(crate::Error::NonExistentPalette);
         };
-        // let rgbs = self.header.rgb.as_ref().context("RGB not found")?;
         let out = self.bitmap.pixel_indices().iter().map(|bsb_p| {
             // NOTE: we subtract one since bsb file indices start at 1
             <[u8; 3]>::from(rgbs[(*bsb_p as usize).saturating_sub(1)])

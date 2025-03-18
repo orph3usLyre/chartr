@@ -1,5 +1,12 @@
 # chartr
-A naval chart manipulation library written in rust.
+Naval chart manipulation tools and utilities written in rust.
+
+[![CI](https://img.shields.io/github/check-runs/orph3usLyre/chartr/main?style=flat-square&label=CI)](https://github.com/orph3usLyre/chartr/actions/workflows/rust.yml)
+<!-- [![Docs.rs](https://img.shields.io/docsrs/chartr?style=flat-square-orange)](https://docs.rs/muddy) -->
+<!-- [![Crates.io](https://img.shields.io/crates/v/libbsb?style=flat-square)](https://crates.io/crates/libbsb) -->
+<!-- [![Downloads](https://img.shields.io/crates/d/libbsb?style=flat-square&color=red)](https://crates.io/crates/libbsb) -->
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square)](./LICENSE-APACHE)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](./LICENSE-MIT)
 
 <!-- cargo-rdme start -->
 
@@ -13,6 +20,7 @@ It aims to provide a minimal, low-level API to build upon. Since it remains uncl
 should provide (the header section, in particular), the responsibility of creating "valid" files is placed on the users of this crate.
 I've tried to emphasise this where possible, by placing these types in `raw` modules.
 
+
 ### Limitations
 
 The [`Maptech BSB File Format Test Dataset Instructions`](https://legacy.iho.int/mtg_docs/com_wg/HSSC/HSSC3/S-64_Edition_2.0.0/RNC_Test_Data_Sets/BSB_TDS/BSB_Test_Dataset_Instructions_for_RNC.pdf) specifies that the BSB format contains three types of files:
@@ -23,14 +31,19 @@ The [`Maptech BSB File Format Test Dataset Instructions`](https://legacy.iho.int
 This library currently **only** supports the BSB image file.
 
 While the BSB/KAP image file supposedly supports a image depth of `1`, I haven't found any examples
-  to test this functionality yet.
+to test this functionality yet.
 
 
 Comments inside BSB/KAP are currently ignored, since it remains unclear how they should be
-  handled.
+handled.
 
-Please open an issue on GitHub if you would like to see support for unimplemented features. PRs
-are welcome!
+There are many field values in the types exposed by this crate that have no clear explanation,
+whether in the `MapTech` BSB documentation or other sources found online. Many of these are annotated
+with "Unknown", while for others I've tried to provide a best guess. If users of this crate
+have any information regarding these values, your input would be welcome.
+
+And as usual, please open an issue on GitHub if you would like to see support for unimplemented features. PRs
+are also welcome.
 
 ### Usage
 
@@ -88,7 +101,7 @@ fn main() -> anyhow::Result<()> {
     let img = image::open("../test_assets/converted_png_8_depth_saint_malo.png")
         .expect("Failed to open image");
 
-    // BSB/KAP files use `u16`s to define their heigh/width
+    // BSB/KAP files use `u16`s to define their height/width
     let (width, height) = (
         img.width().try_into().expect("width is too big"),
         img.height().try_into().expect("height is too big"),
@@ -114,6 +127,12 @@ fn main() -> anyhow::Result<()> {
     let mut palette = map.into_iter().collect::<Vec<_>>();
     palette.sort_by_key(|(_, i)| *i);
 
+    // build the header using the builder pattern
+    //
+    // a header must contain at least the following:
+    // 1. image depth
+    // 2. image width/height
+    // 3. at least one palette to allow conversion to image files
     let header = ImageHeader::builder()
         .ifm(Depth::Seven)
         .general_parameters(
@@ -155,6 +174,17 @@ needed, see the [`bon`] crate for information on the builder pattern.)
 
 ### License
 
-Dual-licensed under Apache 2.0 and MIT terms.
+<sup>
+Licensed under either of <a href="LICENSE-APACHE">Apache License, Version
+2.0</a> or <a href="LICENSE-MIT">MIT license</a> at your option.
+</sup>
+
+<br>
+
+<sub>
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this crate by you, as defined in the Apache-2.0 license, shall
+be dual licensed as above, without any additional terms or conditions.
+</sub>
 
 <!-- cargo-rdme end -->

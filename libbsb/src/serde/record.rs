@@ -11,19 +11,18 @@ use strum::{EnumString, IntoStaticStr};
 use tracing::warn;
 
 use crate::{
+    CRLF,
     image::header::{
         AdditionalParameters, ChartEditionParameters, DetailedParameters, GeneralParameters,
         ImageHeader, NTMRecord,
     },
     serde::AMERICAN_DATE_FORMAT,
-    CRLF,
 };
 
 use super::{
-    error::Error, field::Field, get_boundaries, handle_ires, handle_opt_ires,
-    handle_owned_opt_ires, parse_coords, parse_index_coords, parse_index_err, parse_index_poly,
-    parse_index_rgb, parse_num_tuple_u16, parse_ref, parse_till_comma_or_newline, DATE_FORMAT,
-    FIELD_REGEX,
+    DATE_FORMAT, FIELD_REGEX, error::Error, field::Field, get_boundaries, handle_ires,
+    handle_opt_ires, handle_owned_opt_ires, parse_coords, parse_index_coords, parse_index_err,
+    parse_index_poly, parse_index_rgb, parse_num_tuple_u16, parse_ref, parse_till_comma_or_newline,
 };
 
 #[derive(IntoStaticStr, EnumString, PartialEq, Eq, Debug, Copy, Clone)]

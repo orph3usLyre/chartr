@@ -221,17 +221,22 @@ impl ImageHeader {
 #[non_exhaustive]
 pub struct GeneralParameters {
     /// Field identifier: NA
+    ///
     /// RNC name
     pub chart_name: Option<String>,
 
     /// Field identifier: NU
+    ///
     /// RNC number
     pub chart_number: Option<String>,
 
     /// Field identifier: RA
+    ///
+    /// Width and Height of the image
     pub image_width_height: (u16, u16),
 
     /// Field identifier: DU
+    ///
     /// Pixel resolution of the image
     pub drawing_units: Option<usize>,
 }
@@ -241,14 +246,17 @@ pub struct GeneralParameters {
 #[non_exhaustive]
 pub struct DetailedParameters {
     /// Field identifier: SC
+    ///
     /// Chart scale
     pub chart_scale: Option<usize>,
 
     /// Field identifier: GD
+    ///
     /// Geodetic Datum name
     pub geodetic_datum_name: Option<String>,
 
     /// Field identifier: PR
+    ///
     /// Projection name
     pub projection_name: Option<String>,
 
@@ -259,22 +267,24 @@ pub struct DetailedParameters {
     pub projection_interval: Option<f32>,
 
     /// Field identifier: SP
-    // Unknown
     pub sp: Option<String>,
 
     /// Field identifier: SK
+    ///
     /// Orientation of the north
-    /// Skew Angel in the original [?sic]
+    /// ('Skew Angel' in the original [?sic])
     pub skew_angle: Option<f32>,
 
     /// Field identifier: TA
     pub text_angle: Option<f32>,
 
     /// Field identifier: UN
+    ///
     /// Depth and height units
     pub depth_units: Option<String>,
 
     /// Field identifier: SD
+    ///
     /// Vertical datums
     pub sounding_datum: Option<String>,
 
@@ -340,15 +350,19 @@ pub struct ChartEditionParameters {
 #[non_exhaustive]
 pub struct NTMRecord {
     /// Field identifier: NE
+    ///
     /// NTM edition
     pub edition: Option<f32>,
     /// Field identifier: ND
+    ///
     /// NTM date
     pub date: Option<NaiveDate>,
     /// Field identifier: BF
+    ///
     /// Base flag
     pub base_flag: Option<String>,
     /// Field identifier: BD
+    ///
     /// ADN Record
     pub adn_record: Option<NaiveDate>,
 }

@@ -43,11 +43,11 @@ pub enum Field {
     GC,
     RM,
 }
-use core::fmt::Write;
 use Field::{
     BD, BF, DU, DX, DY, EC, ED, GC, GD, NA, ND, NE, NU, P1, P2, P3, P4, P5, P6, P7, P8, PC, PI, PP,
     PR, RA, RE, RM, SC, SD, SE, SK, SP, TA, UN, VC,
 };
+use core::fmt::Write;
 
 fn write_optional_value<T: std::fmt::Display>(buf: &mut String, val: Option<T>) {
     if let Some(n) = val {
