@@ -288,7 +288,7 @@ impl KapImageFile {
     pub fn as_palette_iter(
         &self,
         palette: ColorPalette,
-    ) -> Result<impl Iterator<Item = [u8; 3]> + use<'_>, crate::Error> {
+    ) -> Result<impl Iterator<Item = [u8; 3]>, crate::Error> {
         let Some(rgbs) = (match palette {
             ColorPalette::Rgb => self.header().rgb.as_ref(),
             ColorPalette::Day => self.header().day.as_ref(),
